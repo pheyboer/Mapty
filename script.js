@@ -60,9 +60,10 @@ class Cycling extends Workout {
   }
 }
 
-const run1 = new Running([39, -12], 5.2, 24, 178);
-const cycling1 = new Cycling([39, -12], 27, 95, 523);
-console.log(run1, cycling1);
+// Test Data
+// const run1 = new Running([39, -12], 5.2, 24, 178);
+// const cycling1 = new Cycling([39, -12], 27, 95, 523);
+// console.log(run1, cycling1);
 
 //////////////////////////////
 
@@ -83,12 +84,16 @@ class App {
   #workouts = [];
 
   constructor() {
+    // executed when application loads
+    // Get users position
     this._getPosition();
 
+    // Get data from local storage
+    this._getLocalStorage();
+
+    // Attach event handlers
     form.addEventListener('submit', this._newWorkout.bind(this));
-
     inputType.addEventListener('change', this._toggleElevationField);
-
     containerWorkouts.addEventListener('click', this._moveToPopup.bind(this));
   }
 
@@ -111,7 +116,6 @@ class App {
     const coords = [latitude, longitude];
 
     this.#map = L.map('map').setView(coords, this.#mapZoomLevel);
-    //console.log(map);
 
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution:
@@ -120,6 +124,12 @@ class App {
 
     //Handling clicks on map
     this.#map.on('click', this._showForm.bind(this));
+    //render workouts in list
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+      // Add marker to map
+      this._renderWorkoutMarker(work);
+    });
   }
 
   _showForm(mapE) {
@@ -190,7 +200,6 @@ class App {
 
     // Add the new object to the workout array
     this.#workouts.push(workout);
-    console.log(workout);
 
     // Render workout on the map as a marker
     this._renderWorkoutMarker(workout);
@@ -200,6 +209,9 @@ class App {
 
     // Hide the form and Clear the input fields
     this._hideForm();
+
+    // Set local storage to all workouts
+    this._setLocalStorage();
   }
 
   _renderWorkoutMarker(workout) {
@@ -273,14 +285,12 @@ class App {
 
   _moveToPopup(e) {
     const workoutEl = e.target.closest('.workout'); // closest helps select closest element
-    console.log(workoutEl);
 
     if (!workoutEl) return; //guard clause
 
     const workout = this.#workouts.find(
       work => work.id === workoutEl.dataset.id
     );
-    console.log(workout);
 
     this.#map.setView(workout.coords, this.#mapZoomLevel, {
       animate: true,
@@ -290,7 +300,34 @@ class App {
     });
 
     //interact with each object using public interface
-    workout.click();
+    // objects coming from local storage will not inherit methods
+    // workout.click();
+  }
+
+  //Local storage is a simple API that the browser provides (blocking)
+  _setLocalStorage() {
+    // Sets all workouts to local storage
+    localStorage.setItem('workouts', JSON.stringify(this.#workouts));
+  }
+
+  _getLocalStorage() {
+    const data = JSON.parse(localStorage.getItem('workouts'));
+
+    //Check if there is data - guard clause
+    if (!data) return;
+
+    this.#workouts = data;
+
+    //render workouts in list
+    this.#workouts.forEach(work => {
+      this._renderWorkout(work);
+    });
+  }
+
+  //Reset local storage (app.reset() in console)
+  reset() {
+    localStorage.removeItem('workouts');
+    location.reload();
   }
 }
 
