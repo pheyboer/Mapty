@@ -332,3 +332,7 @@ class App {
 }
 
 const app = new App();
+
+// Can add additional features
+// ability to delete workouts, or edit
+// position map to show all workouts
